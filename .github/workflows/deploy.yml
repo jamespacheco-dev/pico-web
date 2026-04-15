@@ -51,6 +51,8 @@ jobs:
           push: true
           tags: ${{ vars.REGISTRY_IP }}:${{ vars.REGISTRY_PORT }}/${{ vars.IMAGE_NAME }}:${{ github.sha }}
           outputs: type=registry,registry.insecure=true
+          build-args: |
+            VITE_API_URL=${{ vars.API_URL }}
 
       - name: Set up kubectl
         uses: azure/setup-kubectl@v3
