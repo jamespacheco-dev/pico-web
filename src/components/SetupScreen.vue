@@ -35,7 +35,7 @@ async function start() {
 <template>
   <main class="container setup">
     <header class="setup__header">
-      <h1>Pico Fermi Bagel</h1>
+      <h1>Pico Fermi Bagels</h1>
       <p class="setup__subtitle">
         A number guessing game
       </p>
@@ -189,7 +189,7 @@ async function start() {
           </div>
           <div class="rules__item">
             <dt class="feedback-bagel">
-              Bagel
+              Bagels
             </dt>
             <dd>No matching digits at all</dd>
           </div>

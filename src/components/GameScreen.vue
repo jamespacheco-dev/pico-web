@@ -22,11 +22,11 @@ const guessCount = computed(() => game.value.guesses.length)
 const countOptions = computed(() => Array.from({ length: length.value + 1 }, (_, i) => i))
 
 function formatFeedback(fb) {
-  if (fb.bagel) return 'Bagel'
+  if (fb.bagel) return 'Bagels'
   const parts = []
   if (fb.fermi > 0) parts.push(`${fb.fermi} Fermi`)
   if (fb.pico > 0) parts.push(`${fb.pico} Pico`)
-  return parts.join(', ') || 'Bagel'
+  return parts.join(', ') || 'Bagels'
 }
 
 function feedbackClass(fb) {
