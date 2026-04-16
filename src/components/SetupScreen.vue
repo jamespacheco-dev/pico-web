@@ -24,8 +24,9 @@ async function start() {
       difficulty: isComputerGuesses.value ? difficulty.value : 'easy',
     })
     emit('started', game)
-  } catch {
-    error.value = 'Could not start the game. Try again.'
+  } catch (e) {
+    console.error('[SetupScreen] createGame failed:', e)
+    error.value = e?.message ?? 'Could not start the game. Try again.'
   } finally {
     loading.value = false
   }

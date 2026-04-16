@@ -1,13 +1,30 @@
 const BASE = import.meta.env.VITE_API_URL ?? ''
 
 async function request(method, path, body) {
-  const res = await fetch(`${BASE}${path}`, {
-    method,
-    headers: body ? { 'Content-Type': 'application/json' } : {},
-    body: body ? JSON.stringify(body) : undefined,
-  })
-  const data = await res.json()
-  if (!res.ok) throw { status: res.status, ...data }
+  let res
+  try {
+    res = await fetch(`${BASE}${path}`, {
+      method,
+      headers: body ? { 'Content-Type': 'application/json' } : {},
+      body: body ? JSON.stringify(body) : undefined,
+    })
+  } catch (networkErr) {
+    console.error(`[api] network error ${method} ${BASE}${path}:`, networkErr)
+    throw new Error(`Cannot reach the server. Is it running at ${BASE || 'same origin'}?`)
+  }
+
+  let data
+  try {
+    data = await res.json()
+  } catch {
+    console.error(`[api] non-JSON response ${res.status} ${method} ${BASE}${path}`)
+    throw new Error(`Unexpected response from server (HTTP ${res.status})`)
+  }
+
+  if (!res.ok) {
+    console.error(`[api] error response ${res.status} ${method} ${BASE}${path}:`, data)
+    throw { status: res.status, ...data }
+  }
   return data
 }
 
