@@ -11,6 +11,12 @@ const difficulty = ref('easy')
 const loading = ref(false)
 const error = ref('')
 
+const labels = ref({
+  fermi: 'Fermi',
+  pico: 'Pico',
+  bagels: 'Bagels',
+})
+
 const isComputerGuesses = computed(() => mode.value === 'computer_guesses')
 
 async function start() {
@@ -23,7 +29,7 @@ async function start() {
       allow_repeats: allowRepeats.value,
       difficulty: isComputerGuesses.value ? difficulty.value : 'easy',
     })
-    emit('started', game)
+    emit('started', game, { ...labels.value })
   } catch (e) {
     console.error('[SetupScreen] createGame failed:', e)
     error.value = e?.message ?? 'Could not start the game. Try again.'
@@ -147,6 +153,43 @@ async function start() {
           </div>
         </fieldset>
 
+        <!-- Labels -->
+        <fieldset class="field-group">
+          <legend>What do you call each clue?</legend>
+          <div class="label-fields">
+            <div class="label-field">
+              <label for="label-fermi">Right digit, right place</label>
+              <input
+                id="label-fermi"
+                v-model="labels.fermi"
+                type="text"
+                :placeholder="'Fermi'"
+                maxlength="20"
+              >
+            </div>
+            <div class="label-field">
+              <label for="label-pico">Right digit, wrong place</label>
+              <input
+                id="label-pico"
+                v-model="labels.pico"
+                type="text"
+                :placeholder="'Pico'"
+                maxlength="20"
+              >
+            </div>
+            <div class="label-field">
+              <label for="label-bagels">No matching digits</label>
+              <input
+                id="label-bagels"
+                v-model="labels.bagels"
+                type="text"
+                :placeholder="'Bagels'"
+                maxlength="20"
+              >
+            </div>
+          </div>
+        </fieldset>
+
         <div
           v-if="error"
           class="alert alert-error"
@@ -178,24 +221,24 @@ async function start() {
         <dl class="rules__list">
           <div class="rules__item">
             <dt class="feedback-fermi">
-              Fermi
+              {{ labels.fermi || 'Fermi' }}
             </dt>
             <dd>Right digit, right position</dd>
           </div>
           <div class="rules__item">
             <dt class="feedback-pico">
-              Pico
+              {{ labels.pico || 'Pico' }}
             </dt>
             <dd>Right digit, wrong position</dd>
           </div>
           <div class="rules__item">
             <dt class="feedback-bagel">
-              Bagels
+              {{ labels.bagels || 'Bagels' }}
             </dt>
             <dd>No matching digits at all</dd>
           </div>
         </dl>
-        <p>Guess until you get all Fermi!</p>
+        <p>Guess until you get all {{ labels.fermi || 'Fermi' }}!</p>
       </div>
     </details>
   </main>
@@ -229,6 +272,31 @@ form {
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
+}
+
+.label-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.label-field {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.label-field label {
+  font-size: 0.9375rem;
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 480px) {
+  .label-field {
+    grid-template-columns: 1fr;
+    gap: var(--space-xs);
+  }
 }
 
 .checkbox-label {

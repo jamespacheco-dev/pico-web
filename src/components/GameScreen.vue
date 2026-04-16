@@ -4,6 +4,10 @@ import { createGuess, rollback as apiRollback } from '../api.js'
 
 const props = defineProps({
   initialGame: { type: Object, required: true },
+  labels: {
+    type: Object,
+    default: () => ({ fermi: 'Fermi', pico: 'Pico', bagels: 'Bagels' }),
+  },
 })
 const emit = defineEmits(['reset'])
 
@@ -22,11 +26,11 @@ const guessCount = computed(() => game.value.guesses.length)
 const countOptions = computed(() => Array.from({ length: length.value + 1 }, (_, i) => i))
 
 function formatFeedback(fb) {
-  if (fb.bagel) return 'Bagels'
+  if (fb.bagel) return props.labels.bagels
   const parts = []
-  if (fb.fermi > 0) parts.push(`${fb.fermi} Fermi`)
-  if (fb.pico > 0) parts.push(`${fb.pico} Pico`)
-  return parts.join(', ') || 'Bagels'
+  if (fb.fermi > 0) parts.push(`${fb.fermi} ${props.labels.fermi}`)
+  if (fb.pico > 0) parts.push(`${fb.pico} ${props.labels.pico}`)
+  return parts.join(', ') || props.labels.bagels
 }
 
 function feedbackClass(fb) {
@@ -242,7 +246,7 @@ async function rollbackTo(n) {
                 for="fermi-input"
                 class="feedback-label feedback-fermi"
               >
-                Fermi
+                {{ labels.fermi }}
                 <span class="feedback-label__sub">right digit, right place</span>
               </label>
               <select
@@ -265,7 +269,7 @@ async function rollbackTo(n) {
                 for="pico-input"
                 class="feedback-label feedback-pico"
               >
-                Pico
+                {{ labels.pico }}
                 <span class="feedback-label__sub">right digit, wrong place</span>
               </label>
               <select

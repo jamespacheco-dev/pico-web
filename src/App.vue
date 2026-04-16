@@ -4,13 +4,16 @@ import SetupScreen from './components/SetupScreen.vue'
 import GameScreen from './components/GameScreen.vue'
 
 const activeGame = ref(null)
+const activeLabels = ref(null)
 
-function onGameStarted(game) {
+function onGameStarted(game, labels) {
   activeGame.value = game
+  activeLabels.value = labels
 }
 
 function onReset() {
   activeGame.value = null
+  activeLabels.value = null
 }
 </script>
 
@@ -22,6 +25,7 @@ function onReset() {
   <GameScreen
     v-else
     :initial-game="activeGame"
+    :labels="activeLabels"
     @reset="onReset"
   />
 </template>
