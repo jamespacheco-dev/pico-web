@@ -23,14 +23,18 @@ const isPlayerGuesses = computed(() => game.value.mode === 'player_guesses')
 const isComplete = computed(() => game.value.status === 'complete')
 const length = computed(() => game.value.config.length)
 const guessCount = computed(() => game.value.guesses.length)
-const countOptions = computed(() => Array.from({ length: length.value + 1 }, (_, i) => i))
+const pendingFeedback = computed(() => {
+  const fb = { pico: pico.value, fermi: fermi.value, bagel: pico.value === 0 && fermi.value === 0 }
+  return formatFeedback(fb)
+})
 
 function formatFeedback(fb) {
   if (fb.bagel) return props.labels.bagels
-  const parts = []
-  if (fb.fermi > 0) parts.push(`${fb.fermi} ${props.labels.fermi}`)
-  if (fb.pico > 0) parts.push(`${fb.pico} ${props.labels.pico}`)
-  return parts.join(', ') || props.labels.bagels
+  const parts = [
+    ...Array(fb.fermi).fill(props.labels.fermi),
+    ...Array(fb.pico).fill(props.labels.pico),
+  ]
+  return parts.join(' ') || props.labels.bagels
 }
 
 function feedbackClass(fb) {
@@ -238,57 +242,43 @@ async function rollbackTo(n) {
           class="feedback-form"
           @submit.prevent="submitFeedback"
         >
-          <p class="feedback-form__prompt">
-            How many digits are correct?
-          </p>
-
-          <div class="feedback-form__row">
-            <div class="feedback-form__field">
-              <label
-                for="fermi-input"
-                class="feedback-label feedback-fermi"
-              >
-                {{ labels.fermi }}
-                <span class="feedback-label__sub">right digit, right place</span>
-              </label>
-              <select
-                id="fermi-input"
-                v-model="fermi"
-                :disabled="loading"
-              >
-                <option
-                  v-for="n in countOptions"
-                  :key="n"
-                  :value="n"
-                >
-                  {{ n }}
-                </option>
-              </select>
-            </div>
-
-            <div class="feedback-form__field">
-              <label
-                for="pico-input"
-                class="feedback-label feedback-pico"
-              >
-                {{ labels.pico }}
-                <span class="feedback-label__sub">right digit, wrong place</span>
-              </label>
-              <select
-                id="pico-input"
-                v-model="pico"
-                :disabled="loading"
-              >
-                <option
-                  v-for="n in countOptions"
-                  :key="n"
-                  :value="n"
-                >
-                  {{ n }}
-                </option>
-              </select>
-            </div>
+          <div
+            class="feedback-display"
+            aria-live="polite"
+            aria-label="Current feedback"
+          >
+            {{ pendingFeedback }}
           </div>
+
+          <div class="feedback-tap-row">
+            <button
+              type="button"
+              class="btn btn-tap feedback-fermi"
+              :disabled="loading || fermi + pico >= length"
+              @click="fermi++"
+            >
+              {{ labels.fermi }}
+              <span class="btn-tap__sub">right place</span>
+            </button>
+            <button
+              type="button"
+              class="btn btn-tap feedback-pico"
+              :disabled="loading || fermi + pico >= length"
+              @click="pico++"
+            >
+              {{ labels.pico }}
+              <span class="btn-tap__sub">wrong place</span>
+            </button>
+          </div>
+
+          <button
+            type="button"
+            class="btn btn-ghost btn-sm feedback-clear"
+            :disabled="loading || (fermi === 0 && pico === 0)"
+            @click="fermi = 0; pico = 0"
+          >
+            Clear
+          </button>
 
           <div
             v-if="error"
@@ -459,33 +449,50 @@ async function rollbackTo(n) {
   margin-top: var(--space-md);
 }
 
-.feedback-form__prompt {
-  font-weight: 500;
+.feedback-display {
+  font-size: clamp(1.5rem, 6vw, 2.25rem);
+  font-weight: 700;
+  text-align: center;
+  padding: var(--space-md) 0;
+  min-height: 3.5rem;
+  color: var(--color-text);
 }
 
-.feedback-form__row {
+.feedback-tap-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--space-md);
 }
 
-.feedback-form__field {
+.btn-tap {
   display: flex;
   flex-direction: column;
-  gap: var(--space-xs);
-}
-
-.feedback-label {
-  display: flex;
-  flex-direction: column;
-  font-size: 1.0625rem;
+  align-items: center;
+  gap: 0.25rem;
+  padding: var(--space-md) var(--space-sm);
+  font-size: 1.25rem;
   font-weight: 700;
+  min-height: 5rem;
+  border: 2px solid currentColor;
+  border-radius: var(--radius-md);
+  background: transparent;
+  cursor: pointer;
+  transition: opacity 0.1s;
 }
 
-.feedback-label__sub {
-  font-size: 0.8125rem;
+.btn-tap:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.btn-tap__sub {
+  font-size: 0.75rem;
   font-weight: 400;
-  color: var(--color-text-muted);
+  opacity: 0.75;
+}
+
+.feedback-clear {
+  align-self: center;
 }
 
 /* History */
