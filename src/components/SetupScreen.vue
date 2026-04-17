@@ -14,7 +14,7 @@ const error = ref('')
 const labels = ref({
   fermi: 'Fermi',
   pico: 'Pico',
-  bagels: 'Bagels',
+  bagels: 'Bagel',
 })
 
 const isComputerGuesses = computed(() => mode.value === 'computer_guesses')
@@ -42,7 +42,7 @@ async function start() {
 <template>
   <main class="container setup">
     <header class="setup__header">
-      <h1>Pico Fermi Bagels</h1>
+      <h1>Pico Fermi Bagel</h1>
       <p class="setup__subtitle">
         A number guessing game
       </p>
@@ -183,7 +183,7 @@ async function start() {
                 id="label-bagels"
                 v-model="labels.bagels"
                 type="text"
-                :placeholder="'Bagels'"
+                :placeholder="'Bagel'"
                 maxlength="20"
               >
             </div>
@@ -233,7 +233,7 @@ async function start() {
           </div>
           <div class="rules__item">
             <dt class="feedback-bagel">
-              {{ labels.bagels || 'Bagels' }}
+              {{ labels.bagels || 'Bagel' }}
             </dt>
             <dd>No matching digits at all</dd>
           </div>

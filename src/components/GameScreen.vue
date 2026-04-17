@@ -6,7 +6,7 @@ const props = defineProps({
   initialGame: { type: Object, required: true },
   labels: {
     type: Object,
-    default: () => ({ fermi: 'Fermi', pico: 'Pico', bagels: 'Bagels' }),
+    default: () => ({ fermi: 'Fermi', pico: 'Pico', bagels: 'Bagel' }),
   },
 })
 const emit = defineEmits(['reset'])
