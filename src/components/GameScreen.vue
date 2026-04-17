@@ -97,7 +97,9 @@ async function rollbackTo(n) {
     game.value = await apiRollback(game.value.id, n)
     pico.value = 0
     fermi.value = 0
-    liveMessage.value = `Rolled back to guess ${n}. Computer's current guess is ${game.value.current_guess}.`
+    liveMessage.value = n === 0
+      ? `Rolled back to the beginning. Computer's first guess is ${game.value.current_guess}.`
+      : `Rolled back to guess ${n}. Computer's current guess is ${game.value.current_guess}.`
   } catch (e) {
     error.value = e.message ?? 'Could not roll back.'
   } finally {
@@ -344,6 +346,7 @@ async function rollbackTo(n) {
             v-if="!isPlayerGuesses && !isComplete"
             class="btn btn-ghost btn-sm"
             type="button"
+            :style="g.number === guessCount ? { visibility: 'hidden' } : {}"
             :aria-label="`Roll back to guess ${g.number}`"
             :disabled="loading"
             @click="rollbackTo(g.number)"
@@ -352,6 +355,15 @@ async function rollbackTo(n) {
           </button>
         </li>
       </ol>
+      <button
+        v-if="!isPlayerGuesses && !isComplete"
+        class="btn btn-ghost btn-sm"
+        type="button"
+        :disabled="loading"
+        @click="rollbackTo(0)"
+      >
+        Undo everything
+      </button>
     </section>
   </main>
 </template>
