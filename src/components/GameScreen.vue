@@ -21,8 +21,12 @@ const liveMessage = ref('')
 
 const isPlayerGuesses = computed(() => game.value.mode === 'player_guesses')
 const isComplete = computed(() => game.value.status === 'complete')
+const isLost = computed(() => game.value.status === 'lost')
+const isGameOver = computed(() => isComplete.value || isLost.value)
 const length = computed(() => game.value.config.length)
 const guessCount = computed(() => game.value.guesses.length)
+const maxGuesses = computed(() => game.value.max_guesses ?? 0)
+const remainingGuesses = computed(() => maxGuesses.value > 0 ? maxGuesses.value - guessCount.value : null)
 const pendingFeedback = computed(() => {
   const fb = { pico: pico.value, fermi: fermi.value, bagel: pico.value === 0 && fermi.value === 0 }
   return formatFeedback(fb)
@@ -37,10 +41,14 @@ function formatFeedback(fb) {
   return parts.join(' ') || props.labels.bagels
 }
 
-function feedbackClass(fb) {
-  if (fb.bagel || (fb.pico === 0 && fb.fermi === 0)) return 'feedback-bagel'
-  if (fb.fermi > 0 && fb.pico === 0) return 'feedback-fermi'
-  return 'feedback-pico'
+function formatFeedbackParts(fb) {
+  if (fb.bagel || (fb.pico === 0 && fb.fermi === 0)) {
+    return [{ text: props.labels.bagels, cls: 'feedback-bagel' }]
+  }
+  return [
+    ...Array(fb.fermi).fill({ text: props.labels.fermi, cls: 'feedback-fermi' }),
+    ...Array(fb.pico).fill({ text: props.labels.pico, cls: 'feedback-pico' }),
+  ]
 }
 
 async function submitGuess() {
@@ -57,6 +65,8 @@ async function submitGuess() {
     const latest = game.value.guesses.at(-1)
     if (isComplete.value) {
       liveMessage.value = `You got it in ${guessCount.value} guess${guessCount.value === 1 ? '' : 'es'}!`
+    } else if (isLost.value) {
+      liveMessage.value = `Out of guesses! The number was ${game.value.revealed_secret}.`
     } else {
       liveMessage.value = `Guess ${latest.number}: ${formatFeedback(latest.feedback)}`
     }
@@ -164,8 +174,31 @@ async function rollbackTo(n) {
       </section>
     </template>
 
+    <!-- Lost state -->
+    <template v-if="isLost">
+      <section
+        class="card lose-card"
+        aria-labelledby="lose-heading"
+      >
+        <h2 id="lose-heading">
+          Out of guesses!
+        </h2>
+        <p class="lose-card__detail">
+          The number was
+          <strong class="lose-card__secret">{{ game.revealed_secret }}</strong>
+        </p>
+        <button
+          class="btn btn-primary"
+          type="button"
+          @click="emit('reset')"
+        >
+          Try again
+        </button>
+      </section>
+    </template>
+
     <!-- Active game -->
-    <template v-else>
+    <template v-if="!isGameOver">
       <!-- Player guesses: guess input -->
       <section
         v-if="isPlayerGuesses"
@@ -212,6 +245,12 @@ async function rollbackTo(n) {
           >
             Enter {{ length }} digit{{ length === 1 ? '' : 's' }}
             {{ game.config.allow_repeats ? '' : '— no repeated digits' }}
+            <template v-if="remainingGuesses !== null">
+              &middot;
+              <strong :class="remainingGuesses <= 2 ? 'hint--warning' : ''">
+                {{ remainingGuesses }} guess{{ remainingGuesses === 1 ? '' : 'es' }} left
+              </strong>
+            </template>
           </p>
           <div
             v-if="error"
@@ -245,9 +284,13 @@ async function rollbackTo(n) {
           <div
             class="feedback-display"
             aria-live="polite"
-            aria-label="Current feedback"
+            :aria-label="`Current feedback: ${pendingFeedback}`"
           >
-            {{ pendingFeedback }}
+            <span
+              v-for="(part, i) in formatFeedbackParts({ pico: pico, fermi: fermi, bagel: pico === 0 && fermi === 0 })"
+              :key="i"
+              :class="part.cls"
+            >{{ part.text }}</span>
           </div>
 
           <div class="feedback-tap-row">
@@ -327,10 +370,13 @@ async function rollbackTo(n) {
           >{{ g.value }}</span>
           <span
             class="history__feedback"
-            :class="feedbackClass(g.feedback)"
             :aria-label="`Feedback: ${formatFeedback(g.feedback)}`"
           >
-            {{ formatFeedback(g.feedback) }}
+            <span
+              v-for="(part, i) in formatFeedbackParts(g.feedback)"
+              :key="i"
+              :class="part.cls"
+            >{{ part.text }}</span>
           </span>
           <button
             v-if="!isPlayerGuesses && !isComplete"
@@ -402,6 +448,31 @@ async function rollbackTo(n) {
   color: var(--color-text-muted);
 }
 
+/* Lose card */
+.lose-card {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.lose-card__detail {
+  font-size: 1.125rem;
+  color: var(--color-text-muted);
+}
+
+.lose-card__secret {
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  letter-spacing: 0.15em;
+  color: var(--color-text);
+}
+
+.hint--warning {
+  color: var(--color-error, #c0392b);
+}
+
 /* Guess input */
 .guess-form {
   display: flex;
@@ -456,6 +527,10 @@ async function rollbackTo(n) {
   padding: var(--space-md) 0;
   min-height: 3.5rem;
   color: var(--color-text);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.3em;
 }
 
 .feedback-tap-row {
@@ -544,6 +619,9 @@ async function rollbackTo(n) {
 
 .history__feedback {
   font-weight: 600;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3em;
 }
 
 @media (max-width: 400px) {

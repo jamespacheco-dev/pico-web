@@ -19,6 +19,18 @@ const labels = ref({
 
 const isComputerGuesses = computed(() => mode.value === 'computer_guesses')
 
+function playerDifficultySub(d) {
+  if (d === 'easy') return 'unlimited guesses'
+  if (d === 'hard') return 'optimal — no slack'
+  return 'optimal + 50%'
+}
+
+function difficultyAriaLabel(d) {
+  const name = d.charAt(0).toUpperCase() + d.slice(1)
+  if (isComputerGuesses.value) return `${name} difficulty`
+  return `${name}: ${playerDifficultySub(d)}`
+}
+
 async function start() {
   loading.value = true
   error.value = ''
@@ -27,7 +39,7 @@ async function start() {
       mode: mode.value,
       length: length.value,
       allow_repeats: allowRepeats.value,
-      difficulty: isComputerGuesses.value ? difficulty.value : 'easy',
+      difficulty: difficulty.value,
     })
     emit('started', game, { ...labels.value })
   } catch (e) {
@@ -125,12 +137,9 @@ async function start() {
           </label>
         </div>
 
-        <!-- Difficulty — computer_guesses only -->
-        <fieldset
-          v-if="isComputerGuesses"
-          class="field-group"
-        >
-          <legend>Computer difficulty</legend>
+        <!-- Difficulty -->
+        <fieldset class="field-group">
+          <legend>{{ isComputerGuesses ? 'Computer difficulty' : 'Guess limit' }}</legend>
           <div
             class="toggle-group"
             role="group"
@@ -138,7 +147,7 @@ async function start() {
             <label
               v-for="d in ['easy', 'medium', 'hard']"
               :key="d"
-              class="toggle-option"
+              class="toggle-option toggle-option--stacked"
               :class="{ 'is-selected': difficulty === d }"
             >
               <input
@@ -146,9 +155,13 @@ async function start() {
                 type="radio"
                 name="difficulty"
                 :value="d"
-                :aria-label="`${d.charAt(0).toUpperCase() + d.slice(1)} difficulty`"
+                :aria-label="difficultyAriaLabel(d)"
               >
-              {{ d.charAt(0).toUpperCase() + d.slice(1) }}
+              <span class="toggle-option__label">{{ d.charAt(0).toUpperCase() + d.slice(1) }}</span>
+              <span
+                v-if="!isComputerGuesses"
+                class="toggle-option__sub"
+              >{{ playerDifficultySub(d) }}</span>
             </label>
           </div>
         </fieldset>
@@ -290,6 +303,24 @@ form {
 .label-field label {
   font-size: 0.9375rem;
   color: var(--color-text-muted);
+}
+
+.toggle-option--stacked {
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+  padding-block: var(--space-sm);
+}
+
+.toggle-option__label {
+  font-weight: 600;
+}
+
+.toggle-option__sub {
+  font-size: 0.7rem;
+  font-weight: 400;
+  opacity: 0.7;
+  text-align: center;
 }
 
 @media (max-width: 480px) {
